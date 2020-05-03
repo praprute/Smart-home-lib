@@ -17,6 +17,13 @@
 #define MQ2 33
 #define BUZZER 27
 #define SOLENOID 12
+#define DOORSENSOR 13
+#define LDR 35
+#define PIR 34
+#define RELAY1 25
+#define RELAY2 26
+#define WATER_LEAK 14
+
 
 
 DHT dht;
@@ -25,10 +32,13 @@ LiquidCrystal_I2C lcd(0x3F, 16, 2);
 
 int led_pin[3] = {led_pin1,led_pin2,led_pin3};
 int btn_pin[4] = {btn_pin1, btn_pin2, btn_pin3, btn_pin4};
+int relay[2]   = {RELAY1, RELAY2};
 
 void smarthome::init()
 {
     Serial.begin(9600);
+    pinMode(RELAY1, OUTPUT); 
+    pinMode(RELAY2, OUTPUT);
     dht.setup(32);
     mcp.begin();
     lcd.begin();
@@ -48,7 +58,46 @@ bool getON(char state[]){
       return false;
 }
 
-void smarthome::ShowLCD(int x, int y, const char c[])
+void smarthome::setRelay(int pin, char state[])
+{
+    digitalWrite(relay[pin-1],getON(state));
+}
+
+float smarthome::getWater()
+{
+    float water = analogRead(WATER_LEAK);
+    return water;
+}
+
+bool smarthome::getMovement(){
+    int pir = digitalRead(PIR);
+    if (pir == HIGH)
+    {
+        return true;
+    }else
+    {
+        return false;
+    }
+}
+
+float smarthome::getLight(){
+    float light = analogRead(LDR);
+    return light;
+}
+
+bool smarthome::setDoorSeneor(){
+    int state;
+    state = digitalRead(DOORSENSOR);
+    if (state == HIGH)
+    {
+        return true;
+    }else
+    {
+        return false;
+    }
+}
+
+void smarthome::setLCD(int x, int y, const char c[])
 {
     lcd.setCursor(x, y);
     lcd.print(c);
@@ -58,7 +107,7 @@ void smarthome::ClearText(){
     lcd.clear();
 }
 
-float smarthome::DetectedSmoke(){
+float smarthome::getSmoke(){
     float mq = analogRead(MQ2);
     return mq;
 }
@@ -73,7 +122,7 @@ float smarthome::getHumit()
     return dht.getHumidity();
 }
 
-bool smarthome::ReadSwitch(int pin){
+bool smarthome::getSwitch(int pin){
     mcp.pinMode(btn_pin[pin-1], INPUT);
 if (mcp.digitalRead(btn_pin[pin-1]) == 0)
     {
@@ -85,21 +134,20 @@ if (mcp.digitalRead(btn_pin[pin-1]) == 0)
     }
 }
 
-void smarthome::LED(int pin, char state[])
+void smarthome::setLED(int pin, char state[])
 {
     // mcp.pinMode(pin, OUTPUT);
     // Serial.println(getON(state));
     mcp.digitalWrite(led_pin[pin - 1], getON(state));
 }
 
-void smarthome::ActiveBuzzer(char state[]){
-    digitalWrite(BUZZER ,getON(state))
+void smarthome::setBuzzer(char state[]){
+    digitalWrite(BUZZER ,getON(state));
 }
-void smarthome::SolenoidON(char state[]){
-    digitalWrite(BUZZER ,getON(state))
+void smarthome::setSolenoid(char state[]){
+    digitalWrite(BUZZER ,getON(state));
 }
 
-void
 
 
 
