@@ -19,4 +19,8 @@ class smarthome{
         void setSolenoid(char state[]);  
         void setRelay(int pin, char state[]);
 
+        bool isCard();
+	    bool readCardSerial();
+        void rfidHalt();
+        unsigned char serNum(int position);
 };

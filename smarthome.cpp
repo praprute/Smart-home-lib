@@ -1,9 +1,12 @@
 #include "smarthome.h"
 #include "Arduino.h"
+#include "LedControl.h"
 #include "DHT.h"
 #include "MCP23017.h"
 #include "LiquidCrystal_I2C.h"
 #include <inttypes.h>
+#include <SPI.h>
+#include <RFID.h>
 
 #define led_pin1 8
 #define led_pin2 9
@@ -19,16 +22,24 @@
 #define SOLENOID 12
 #define DOORSENSOR 13
 #define LDR 35
-#define PIR 34
+#define PIR 14
+
 #define RELAY1 25
 #define RELAY2 26
-#define WATER_LEAK 14
+
+#define WATER_LEAK 34
+
+#define SDA_PIN 21
+#define RST_PIN 22
 
 
 
 DHT dht;
 MCP23017 mcp;
 LiquidCrystal_I2C lcd(0x3F, 16, 2);
+LedControl lc=LedControl(23,18,5,1);
+RFID rfid(SDA_PIN, RST_PIN); 
+//23 MOSI 18CLK 5CS
 
 int led_pin[3] = {led_pin1,led_pin2,led_pin3};
 int btn_pin[4] = {btn_pin1, btn_pin2, btn_pin3, btn_pin4};
@@ -43,14 +54,33 @@ void smarthome::init()
     mcp.begin();
     lcd.begin();
     lcd.backlight();
-    // mcp.pinMode(8, OUTPUT);
-    // mcp.pinMode(15, INPUT);
-    // mcp.pullUp(15, HIGH);
+    SPI.begin(); 
+    rfid.init();
 }
 
+void smarthome::rfidHalt()
+{
+    rfid.halt();
+}
+
+unsigned char smarthome::serNum(int position)
+{
+    return rfid.serNum[position];
+}
+
+bool smarthome::isCard()
+{
+    return rfid.isCard();
+}
+
+bool smarthome::readCardSerial()
+{
+    return rfid.readCardSerial();
+}
 
 // getter
-bool getON(char state[]){
+bool getON(char state[])
+{
     if (state == "ON")
     {
         return true;
@@ -69,7 +99,8 @@ float smarthome::getWater()
     return water;
 }
 
-bool smarthome::getMovement(){
+bool smarthome::getMovement()
+{
     int pir = digitalRead(PIR);
     if (pir == HIGH)
     {
@@ -80,12 +111,15 @@ bool smarthome::getMovement(){
     }
 }
 
-float smarthome::getLight(){
+
+float smarthome::getLight()
+{
     float light = analogRead(LDR);
     return light;
 }
 
-bool smarthome::setDoorSeneor(){
+bool smarthome::setDoorSeneor()
+{
     int state;
     state = digitalRead(DOORSENSOR);
     if (state == HIGH)
@@ -103,11 +137,13 @@ void smarthome::setLCD(int x, int y, const char c[])
     lcd.print(c);
 }
 
-void smarthome::ClearText(){
+void smarthome::ClearText()
+{
     lcd.clear();
 }
 
-float smarthome::getSmoke(){
+float smarthome::getSmoke()
+{
     float mq = analogRead(MQ2);
     return mq;
 }
@@ -122,7 +158,8 @@ float smarthome::getHumit()
     return dht.getHumidity();
 }
 
-bool smarthome::getSwitch(int pin){
+bool smarthome::getSwitch(int pin)
+{
     mcp.pinMode(btn_pin[pin-1], INPUT);
 if (mcp.digitalRead(btn_pin[pin-1]) == 0)
     {
@@ -141,12 +178,16 @@ void smarthome::setLED(int pin, char state[])
     mcp.digitalWrite(led_pin[pin - 1], getON(state));
 }
 
-void smarthome::setBuzzer(char state[]){
+void smarthome::setBuzzer(char state[])
+{
     digitalWrite(BUZZER ,getON(state));
 }
-void smarthome::setSolenoid(char state[]){
-    digitalWrite(BUZZER ,getON(state));
+
+void smarthome::setSolenoid(char state[])
+{
+    digitalWrite(SOLENOID ,getON(state));
 }
+
 
 
 
